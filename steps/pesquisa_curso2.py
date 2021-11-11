@@ -35,4 +35,3 @@ def clico_no_botao():
 def exibe_a_pagina_do_carrinho_e_valida(curso, preco):
     assert curso == 'Mantis'
     assert preco == 'R$ 59,99'
-
