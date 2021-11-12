@@ -11,6 +11,7 @@ class TesteCadastro:
     def setup(self):
         self.driver = webdriver.Chrome('C:\\webdrivers\\chromedriver\\95\\chromedriver.exe')
         self.driver.maximize_window()
+        # Importação das variáveis do arquivo Dados, pois assim dados pessoais não precisam ficar no código (LGPD):
         self.nome = Dados.nome
         self.senha = Dados.senha
         self.telefone = Dados.telefone
@@ -18,6 +19,12 @@ class TesteCadastro:
     def teardown(self):
         self.driver.quit()
 
+    # Método Utilizado para Testar a Função de Cadastro:
+    # Possui 2 Etapas manuais:
+    # 1 - Colocar Captcha
+    #       - Correto, automação prossegue
+    #       - Incorreto, só colocar novamente e apertar no botão Criar Conta
+    # 2 - Fechar Anúncio após clicar no assunto do e-mail (não é possível automatizar)
     def testar_cadastro(self):
         driver = self.driver
         driver.get('https://iterasys.com.br/')
@@ -136,9 +143,10 @@ class TesteCadastro:
         texto_confirmacao = driver.find_element(By.CSS_SELECTOR, 'div.alert h4').text
         assert texto_confirmacao == "Confirmação concluída!"
 
-    def testar_login(self):
-        self.testar_cadastro()
-        email_temp = self.email_temp
+    # Método criado para fazer o Login, ele é reutilizado em dois casos:
+    # 1 - Para testar o Login após fazer o cadastro, com o mesmo e-mail usado no cadastro.
+    # 2 - Para testar o Login com um e-mail que já está cadastrado a algum tempo.
+    def login(self, email_temp):
         driver = self.driver
         driver.get('https://iterasys.com.br/')
 
@@ -169,3 +177,30 @@ class TesteCadastro:
         # Checar se os campos do cadastro estão corretos:
         assert driver.find_element(By.ID, 'nome').get_attribute('value') == self.nome
         assert driver.find_element(By.ID, 'email').get_attribute('value') == email_temp
+
+    # Teste do Cadastro + Login
+    def testar_login_com_cadastro(self):
+        # Executa-se o método de cadastrar
+        self.testar_cadastro()
+        # Recebe o e-mail usado para cadastro
+        email_temp = self.email_temp
+        # O utiliza para Login
+        self.login(email_temp)
+
+    # Teste do Login (já cadastrado)
+    def testar_login_standalone(self):
+        self.email = Dados.email
+        self.login(self.email)
+
+    # Teste do Logout (já cadastrado)
+    def testar_logout(self):
+        # Método de teste do Login:
+        self.testar_login_standalone()
+        driver = self.driver
+
+        # Fazer o Logout:
+        driver.find_element(By.CSS_SELECTOR, 'li.dropdown').click()
+        driver.find_element(By.CSS_SELECTOR, 'li.li_logout').click()
+
+        # Checar se está deslogado:
+        assert driver.find_element(By.CSS_SELECTOR, 'li.login_header a').text == 'Login'
